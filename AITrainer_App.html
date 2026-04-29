@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Trainer - Personal Fitness Coach</title>
+  <style>
+    :root {
+      --primary: #2E75B6;
+      --primary-light: #5B9FD9;
+      --success: #3B6D11;
+      --warning: #854F0B;
+      --danger: #A32D2D;
+      --dark: #1a1a1a;
+      --light: #f8f9fa;
+      --border: #e0e0e0;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: var(--light);
+    }
+
+    .phone-frame {
+      width: 380px;
+      height: 812px;
+      background: white;
+      border: 12px solid #000;
+      border-radius: 40px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      margin: 0 auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      position: relative;
+    }
+
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 25px;
+      background: #000;
+      border-radius: 0 0 20px 20px;
+      z-index: 100;
+    }
+
+    .app-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      padding: 16px 16px 24px 16px;
+      color: white;
+      margin-top: 8px;
+    }
+
+    .app-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    .app-header .subtitle {
+      font-size: 13px;
+      opacity: 0.9;
+      font-weight: 500;
+    }
+
+    .app-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+      display: none;
+      scroll-behavior: smooth;
+    }
+
+    .app-content.active {
+      display: block;
+    }
+
+    .app-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .app-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .app-content::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 3px;
+    }
+
+    .screen {
+      animation: fadeIn 0.4s ease-out;
+      padding: 20px 16px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .greeting {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .quick-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .quick-stat {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .quick-stat:hover {
+      border-color: var(--primary);
+      background: #f0f7ff;
+    }
+
+    .quick-stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .quick-stat-label {
+      font-size: 12px;
+      color: #666;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dark);
+      margin: 20px 0 12px 0;
+      letter-spacing: -0.3px;
+    }
+
+    .vital-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .vital-card:hover {
+      border-color: #999;
+    }
+
+    .vital-card.highlight {
+      border: 2px solid var(--danger);
+      background: #fff5f5;
+    }
+
+    .vital-card.success {
+      border: 2px solid var(--success);
+      background: #f5faf0;
+    }
+
+    .vital-label {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 8px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .vital-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .vital-card.highlight .vital-value {
+      color: var(--danger);
+    }
+
+    .vital-card.success .vital-value {
+      color: var(--success);
+    }
+
+    .vital-status {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    .status-good {
+      background: #e8f5e9;
+      color: var(--success);
+    }
+
+    .status-warning {
+      background: #fff3e0;
+      color: var(--warning);
+    }
+
+    .status-poor {
+      background: #ffebee;
+      color: var(--danger);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #f0f0f0;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--dark);
+      letter-spacing: -0.2px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="range"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 16px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    input[type="range"] {
+      padding: 8px 0;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      border: 3px solid white;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      border: 3px solid white;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #f8fbff;
+    }
+
+    textarea {
+      resize: none;
+    }
+
+    .range-value {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #999;
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 16px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dark);
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all 0.3s ease;
+      letter-spacing: -0.3px;
+    }
+
+    .btn:hover {
+      background: var(--light);
+      border-color: #999;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      border: none;
+      color: white;
+    }
+
+    .btn.primary:hover {
+      background: var(--primary-light);
+    }
+
+    .btn.secondary {
+      margin-top: 8px;
+      background: var(--light);
+      color: var(--dark);
+    }
+
+    .impact-box {
+      background: #f0f7ff;
+      border: 2px solid var(--primary);
+      border-radius: 12px;
+      padding: 14px;
+      margin: 16px 0;
+      font-size: 13px;
+      color: #333;
+      line-height: 1.6;
+      font-weight: 500;
+    }
+
+    .impact-box strong {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .adjustment-list {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin: 12px 0;
+    }
+
+    .adjustment-item {
+      font-size: 13px;
+      color: #333;
+      margin: 12px 0;
+      padding-left: 20px;
+      border-left: 3px solid var(--success);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .adjustment-item:first-child {
+      margin-top: 0;
+    }
+
+    .adjustment-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .bottom-nav {
+      display: flex;
+      gap: 0;
+      border-top: 1px solid var(--border);
+      background: white;
+      padding: 8px 0;
+      margin-top: auto;
+    }
+
+    .nav-btn {
+      flex: 1;
+      padding: 14px 8px;
+      background: transparent;
+      border: none;
+      color: #999;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s ease;
+      border-top: 3px solid transparent;
+      letter-spacing: -0.2px;
+    }
+
+    .nav-btn.active {
+      color: var(--primary);
+      border-top-color: var(--primary);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-row.highlight {
+      background: #fff5f5;
+      padding: 12px 8px;
+      margin: 0 -8px;
+      border-radius: 8px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: #999;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .stat-row.highlight .stat-value {
+      color: var(--danger);
+    }
+
+    .workout-header {
+      background: var(--light);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .workout-title {
+      font-weight: 700;
+      color: var(--dark);
+      font-size: 15px;
+    }
+
+    .workout-duration {
+      font-size: 12px;
+      color: #999;
+      font-weight: 600;
+    }
+
+    .exercise-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .exercise-number {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 8px;
+    }
+
+    .exercise-name {
+      font-weight: 700;
+      color: var(--dark);
+      font-size: 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+    }
+
+    .exercise-detail {
+      font-size: 12px;
+      color: #666;
+      margin: 4px 0;
+      margin-left: 32px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="app-header">
+      <h1>AI Trainer</h1>
+      <div class="subtitle">Your Personal AI Coach</div>
+    </div>
+
+    <!-- HOME SCREEN -->
+    <div class="app-content active" id="homeScreen">
+      <div class="screen">
+        <div class="greeting">Good morning</div>
+
+        <div class="quick-stats">
+          <div class="quick-stat">
+            <div class="quick-stat-value">4h</div>
+            <div class="quick-stat-label">Sleep</div>
+          </div>
+          <div class="quick-stat">
+            <div class="quick-stat-value">3.2k</div>
+            <div class="quick-stat-label">Steps</div>
+          </div>
+          <div class="quick-stat">
+            <div class="quick-stat-value">3/4</div>
+            <div class="quick-stat-label">Workouts</div>
+          </div>
+          <div class="quick-stat">
+            <div class="quick-stat-value">72%</div>
+            <div class="quick-stat-label">Recovery</div>
+          </div>
+        </div>
+
+        <div class="section-title">This Week</div>
+        <div class="vital-card">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span class="vital-label">Workout Completion</span>
+            <span style="font-weight: 700; color: var(--dark);">75%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 75%;"></div>
+          </div>
+        </div>
+
+        <div class="vital-card">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span class="vital-label">Sleep Quality</span>
+            <span style="font-weight: 700; color: var(--dark);">5.2 hrs avg</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 52%; background: var(--warning);"></div>
+          </div>
+        </div>
+
+        <div class="vital-card highlight" style="margin-top: 16px;">
+          <div class="vital-label">⚠️ Sleep Alert</div>
+          <div class="vital-value">4 hours last night</div>
+          <div class="vital-status status-poor">Recovery Impact: High</div>
+          <p style="font-size: 13px; color: #666; margin-top: 10px; line-height: 1.5;">Your training will be adjusted today. We'll focus on form over intensity to protect your recovery.</p>
+        </div>
+
+        <button class="btn primary" onclick="showScreen('vitalScreen')">Update Vitals</button>
+        <button class="btn" onclick="showScreen('planScreen')">View Plan</button>
+      </div>
+    </div>
+
+    <!-- VITALS UPDATE SCREEN -->
+    <div class="app-content" id="vitalScreen">
+      <div class="screen">
+        <div class="greeting">Update Your Vitals</div>
+
+        <div class="form-group">
+          <label>Sleep Last Night</label>
+          <input type="range" id="sleepRange" min="0" max="12" value="4" onchange="updateImpact()">
+          <div class="range-value">
+            <span>0h</span>
+            <span id="sleepValue" style="color: var(--primary);">4h</span>
+            <span>12h</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Steps Today</label>
+          <input type="number" id="stepsInput" value="3240" placeholder="Enter steps">
+        </div>
+
+        <div class="form-group">
+          <label>Energy Level</label>
+          <select id="energyLevel" onchange="updateImpact()">
+            <option value="low">🔴 Low - Fatigued, sore</option>
+            <option value="moderate" selected>🟡 Moderate - Normal</option>
+            <option value="high">🟢 High - Fresh, excited</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Any Pain?</label>
+          <textarea id="painNotes" placeholder="Lower back tightness, knee soreness..." style="height: 80px;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Nutrition</label>
+          <select id="nutritionQuality" onchange="updateImpact()">
+            <option value="poor">Poor - Skipped meals</option>
+            <option value="okay">Okay - Some meals</option>
+            <option value="good" selected>Good - 3+ meals</option>
+            <option value="excellent">Excellent - On track</option>
+          </select>
+        </div>
+
+        <div id="impactAlert" class="impact-box" style="display: none;">
+          <strong>Plan Adjustment:</strong> <span id="impactText"></span>
+        </div>
+
+        <button class="btn primary" onclick="saveVitals()">Save & Update Plan</button>
+        <button class="btn secondary" onclick="showScreen('homeScreen')">Cancel</button>
+      </div>
+    </div>
+
+    <!-- PLAN SCREEN -->
+    <div class="app-content" id="planScreen">
+      <div class="screen">
+        <div class="greeting">Today's Plan</div>
+
+        <div class="vital-card highlight" style="margin-bottom: 20px;">
+          <div class="vital-label">Sleep Status</div>
+          <div class="vital-value">⚠️ 4 hours</div>
+          <div class="vital-status status-poor">Fatigue: High</div>
+        </div>
+
+        <div class="section-title">Plan Adjustments</div>
+        <div class="adjustment-list">
+          <div class="adjustment-item">✓ Reduced volume: 4 sets → 3 sets</div>
+          <div class="adjustment-item">✓ Lighter weight: -10% from usual</div>
+          <div class="adjustment-item">✓ Extended rest: 2-3 min between sets</div>
+          <div class="adjustment-item">✓ Extra mobility: +10 min recovery</div>
+        </div>
+
+        <div class="section-title">Upper Body Strength</div>
+        <div class="workout-header">
+          <div>
+            <div class="workout-title">Recovery Focus</div>
+            <div class="workout-duration">45 min</div>
+          </div>
+        </div>
+
+        <div class="exercise-card">
+          <div class="exercise-name">
+            <span class="exercise-number">1</span>
+            Dumbbell Bench Press
+          </div>
+          <div class="exercise-detail"><strong>Sets:</strong> 3 × 8-10 reps</div>
+          <div class="exercise-detail"><strong>Weight:</strong> 55 lbs (vs 65 lbs)</div>
+          <div class="exercise-detail"><strong>Rest:</strong> 2-3 min</div>
+        </div>
+
+        <div class="exercise-card">
+          <div class="exercise-name">
+            <span class="exercise-number">2</span>
+            Incline Dumbbell Press
+          </div>
+          <div class="exercise-detail"><strong>Sets:</strong> 2 × 10-12 reps</div>
+          <div class="exercise-detail"><strong>Rest:</strong> 90 sec</div>
+        </div>
+
+        <div class="exercise-card">
+          <div class="exercise-name">
+            <span class="exercise-number">3</span>
+            Bent-Over Rows
+          </div>
+          <div class="exercise-detail"><strong>Sets:</strong> 4 × 6-8 reps</div>
+          <div class="exercise-detail"><strong>Rest:</strong> 2 min</div>
+        </div>
+
+        <div class="section-title">Recovery (15 min)</div>
+        <div class="vital-card">
+          <div class="stat-row">
+            <span class="stat-label">Foam rolling</span>
+            <span class="stat-value">5 min</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Stretching</span>
+            <span class="stat-value">8 min</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Breathing</span>
+            <span class="stat-value">2 min</span>
+          </div>
+        </div>
+
+        <div class="section-title">Nutrition</div>
+        <div class="vital-card">
+          <div class="stat-row">
+            <span class="stat-label">Daily Target</span>
+            <span class="stat-value">2,850 cal</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Protein</span>
+            <span class="stat-value">185g</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Carbs</span>
+            <span class="stat-value">310g</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Fats</span>
+            <span class="stat-value">95g</span>
+          </div>
+        </div>
+
+        <button class="btn" onclick="showScreen('homeScreen')">Back</button>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn active" onclick="navTo('homeScreen', event)">Home</button>
+      <button class="nav-btn" onclick="navTo('vitalScreen', event)">Vitals</button>
+      <button class="nav-btn" onclick="navTo('planScreen', event)">Plan</button>
+    </div>
+  </div>
+
+  <script>
+    function showScreen(screenId) {
+      const screens = document.querySelectorAll('.app-content');
+      screens.forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function navTo(screenId, event) {
+      showScreen(screenId);
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    function updateImpact() {
+      const sleep = parseInt(document.getElementById('sleepRange').value);
+      const energy = document.getElementById('energyLevel').value;
+
+      let impactText = '';
+      let show = false;
+
+      if (sleep < 6) {
+        impactText = 'Low sleep detected. Reducing volume and intensity. Focus on form and recovery.';
+        show = true;
+      } else if (sleep >= 8 && energy === 'high') {
+        impactText = 'Excellent recovery! Increasing intensity and weight recommendations today.';
+        show = true;
+      } else if (energy === 'low') {
+        impactText = 'Low energy detected. Switching to lighter, mobility-focused session.';
+        show = true;
+      }
+
+      if (show) {
+        document.getElementById('impactAlert').style.display = 'block';
+        document.getElementById('impactText').textContent = impactText;
+      } else {
+        document.getElementById('impactAlert').style.display = 'none';
+      }
+
+      document.getElementById('sleepValue').textContent = sleep + 'h';
+    }
+
+    function saveVitals() {
+      const sleep = document.getElementById('sleepRange').value;
+      const steps = document.getElementById('stepsInput').value;
+
+      alert('✓ Vitals saved! Your training plan has been adjusted based on your data.');
+      showScreen('homeScreen');
+    }
+  </script>
+</body>
+</html>
