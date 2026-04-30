@@ -1,6 +1,6 @@
 # TrainAI - AI Personal Trainer App
 
-A beautiful, interactive mobile app prototype for an AI-powered personal fitness coach that adapts to your daily vitals and automatically adjusts your training plan.
+Personal trainers are expensive ($100+ multiple times per week). Imagine having your own personal trainer in your pocket on your device that knows your vitals, how you sleep, eat, and can tailor workout, fitness, and recovery plans to your body and to help you achieve your goals. 
 
 ## 🎯 Project Overview
 
